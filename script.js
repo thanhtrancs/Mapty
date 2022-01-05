@@ -73,6 +73,9 @@ const inputDistance = document.querySelector('.form__input--distance');
 const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
+let edit = false;
+let currentWorkout;
+let currentWorkoutEl;
 
 class App {
   #map;
@@ -90,6 +93,16 @@ class App {
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
+
+    document.addEventListener('click', e => {
+      if (
+        e.target &&
+        e.target.className === 'button__icon button__icon--edit'
+      ) {
+        edit = true;
+        this._editWorkout(e);
+      }
+    });
   }
 
   _getPosition() {
@@ -151,61 +164,122 @@ class App {
   }
 
   _newWorkout(e) {
+    console.log(edit);
+    e.preventDefault();
+
     const validInput = (...inputs) =>
       inputs.every(input => Number.isFinite(input));
 
     const allPositives = (...inputs) => inputs.every(input => input > 0);
+    if (!edit) {
+      // const validInput = (...inputs) =>
+      //   inputs.every(input => Number.isFinite(input));
 
-    e.preventDefault();
-    // console.log(this);
+      // const allPositives = (...inputs) => inputs.every(input => input > 0);
 
-    // Get data fromform
-    const type = inputType.value;
-    const distance = +inputDistance.value;
-    const duration = +inputDuration.value;
-    const { lat, lng } = this.#mapEvent.latlng;
-    let workout;
+      // e.preventDefault();
+      // console.log(this);
 
-    // If workout is running, create Running object
-    if (type === 'running') {
-      const cadence = +inputCadence.value;
-      // Check if data is valid
-      if (
-        !validInput(distance, duration, cadence) ||
-        !allPositives(distance, duration, cadence)
-      )
-        return alert('Number has to be positive numbers!');
+      // Get data from form
+      const type = inputType.value;
+      const distance = +inputDistance.value;
+      const duration = +inputDuration.value;
+      const { lat, lng } = this.#mapEvent.latlng;
 
-      workout = new Running([lat, lng], distance, duration, cadence);
+      let workout;
+
+      // If workout is running, create Running object
+      if (type === 'running') {
+        const cadence = +inputCadence.value;
+        // Check if data is valid
+        if (
+          !validInput(distance, duration, cadence) ||
+          !allPositives(distance, duration, cadence)
+        )
+          return alert('Number has to be positive numbers!');
+
+        workout = new Running([lat, lng], distance, duration, cadence);
+      }
+      // If workout is cycling, create Cycling object
+      if (type === 'cycling') {
+        // Check if data is valid
+        const elevation = +inputElevation.value;
+        if (
+          !validInput(distance, duration, elevation) ||
+          !allPositives(distance, duration, elevation)
+        )
+          return alert('Number has to be positive numbers!');
+
+        workout = new Cycling([lat, lng], distance, duration, elevation);
+      }
+
+      // Add new object to workout array
+      this.#workouts.push(workout);
+      // console.log(this.#workouts);
+
+      // Render workout on map as marker
+      this._renderWorkoutMarker(workout);
+
+      // Render workout on list
+      this._renderWorkout(workout);
+
+      // Hide form + clear input fields
+      this._hideForm();
+
+      // Set local storage
+      this._setLocalStorage();
+    } else {
+      // console.log('Editting!!!!!!');
+      // Modify existed workout
+
+      // console.log(this);
+
+      // Get data from form
+      const type = inputType.value;
+      const distance = +inputDistance.value;
+      const duration = +inputDuration.value;
+
+      let workout;
+
+      // If workout is running, create Running object
+      if (type === 'running') {
+        const cadence = +inputCadence.value;
+        // Check if data is valid
+        if (
+          !validInput(distance, duration, cadence) ||
+          !allPositives(distance, duration, cadence)
+        )
+          return alert('Number has to be positive numbers!');
+
+        // Update current Running object
+        // workout = new Running([lat, lng], distance, duration, cadence);
+        console.log(currentWorkout);
+        currentWorkout.distance = distance;
+        currentWorkout.duration = duration;
+        currentWorkout.cadence = cadence;
+        console.log(currentWorkout);
+      }
+      // If workout is cycling, create Cycling object
+      if (type === 'cycling') {
+        // Check if data is valid
+        const elevation = +inputElevation.value;
+        if (
+          !validInput(distance, duration, elevation) ||
+          !allPositives(distance, duration, elevation)
+        )
+          return alert('Number has to be positive numbers!');
+
+        // Update current Cycling object
+        // workout = new Cycling([lat, lng], distance, duration, elevation);
+      }
+
+      currentWorkoutEl.classList.remove('hidden');
+      // Hide form + clear input fields
+      this._hideForm();
+
+      // Set local storage
+      this._setLocalStorage();
     }
-    // If workout is cycling, create Cycling object
-    if (type === 'cycling') {
-      // Check if data is valid
-      const elevation = +inputElevation.value;
-      if (
-        !validInput(distance, duration, elevation) ||
-        !allPositives(distance, duration, elevation)
-      )
-        return alert('Number has to be positive numbers!');
-
-      workout = new Cycling([lat, lng], distance, duration, elevation);
-    }
-
-    // Add new object to workout array
-    this.#workouts.push(workout);
-    // console.log(this.#workouts);
-
-    // Render workout on map as marker
-    this._renderWorkoutMarker(workout);
-
-    // Render workout on list
-    this._renderWorkout(workout);
-
-    // Hide form + clear input fields
-    this._hideForm();
-
-    // Set local storage
-    this._setLocalStorage();
   }
 
   _renderWorkoutMarker(workout) {
@@ -229,7 +303,13 @@ class App {
   _renderWorkout(workout) {
     let html = `
     <li class="workout workout--${workout.type}" data-id="${workout.id}">
+        
         <h2 class="workout__title">${workout.description}</h2>
+        <div class="buttons__icon">
+        <button class="button__icon button__icon--edit">🖊</button>
+        <button class="button__icon button__icon--delete">🗑</button>
+        </div>
+        
         <div class="workout__details">
             <span class="workout__icon">${
               workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'
@@ -274,6 +354,54 @@ class App {
     }
 
     form.insertAdjacentHTML('afterend', html);
+
+    // editButton = document.querySelector('.button__icon--edit');
+    // deleteButton = document.querySelector('.button__icon--delete');
+
+    // editButton.addEventListener('click', this._editWorkout);
+    // document.addEventListener('click', e => {
+    //   if (
+    //     e.target &&
+    //     e.target.className === 'button__icon button__icon--edit'
+    //   ) {
+    //     this._editWorkout();
+    //   }
+    // });
+  }
+
+  _editWorkout(e) {
+    // 1. Find the workout data that needs to be modified
+    currentWorkoutEl = e.target.closest('.workout');
+
+    if (!currentWorkoutEl) return;
+
+    currentWorkout = this.#workouts.find(
+      work => work.id === currentWorkoutEl.dataset.id
+    );
+
+    // 2. Save the data in variables to show in form
+    const { distance, duration } = currentWorkout;
+    let pace, cadence, elevationGain;
+
+    if (currentWorkout.type === 'running') {
+      pace = currentWorkout.pace;
+      cadence = currentWorkout.cadence;
+    } else {
+      ({ elevationGain } = currentWorkout);
+      this._toggleElevationField();
+    }
+
+    // 3. Hide current workout details and replace with
+    // filled current data on form
+    inputType.value = currentWorkout.type;
+    form.classList.remove('hidden');
+    currentWorkoutEl.classList.add('hidden');
+    inputDistance.value = distance;
+    inputDuration.value = duration;
+    if (cadence) inputCadence.value = cadence;
+    if (elevationGain) inputElevation.value = elevationGain;
+
+    // 4. Update workout data, hide form, and show workout details
   }
 
   _moveToPopup(e) {
