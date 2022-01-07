@@ -63,6 +63,8 @@ class Cycling extends Workout {
 //--------------------Application Architecture----------------------
 const form = document.querySelector('.form');
 const formContainer = document.querySelector('.form__container');
+const buttonsTop = document.querySelector('.buttons__container');
+const buttonDeleteAll = document.querySelector('.button__top--delete');
 const buttonClose = document.querySelector('.button__close__form');
 const containerWorkouts = document.querySelector('.workouts');
 const inputType = document.querySelector('.form__input--type');
@@ -79,8 +81,9 @@ class App {
   #edit = false;
   #currentWorkout;
   #currentWorkoutEl;
-  #formPosition;
+  #markers = [];
 
+  // #formPosition;
   constructor() {
     // Get user's position
     this._getPosition();
@@ -99,10 +102,25 @@ class App {
       ) {
         this._editWorkout(e);
       }
+
+      if (
+        e.target &&
+        e.target.className === 'button__icon button__icon--delete'
+      ) {
+        this._deleteWorkout(e);
+      }
     });
 
     buttonClose.addEventListener('click', this._hideForm.bind(this));
 
+    buttonDeleteAll.addEventListener(
+      'click',
+      this._deleteAllWorkouts.bind(this)
+    );
+
+    if (this.#workouts.length > 0) {
+      this._toggleHiddenButtons();
+    }
     // this.#formPosition = formContainer.getBoundingClientRect();
     // this.reset();
   }
@@ -162,8 +180,12 @@ class App {
 
     if (this.#edit) {
       this._toggleDisabledButtons();
-      this.#currentWorkoutEl.classList.remove('hidden');
+      // this.#currentWorkoutEl.classList.remove('hidden');
     }
+  }
+
+  _toggleHiddenButtons() {
+    buttonsTop.classList.toggle('hidden');
   }
 
   _toggleDisabledButtons() {
@@ -234,6 +256,12 @@ class App {
 
       // Set local storage
       this._setLocalStorage();
+
+      // Show sort and delete buttons
+      // if (buttonsTop.classList.contains('hidden')) {
+      //   buttonsTop.classList.remove('hidden');
+      // }
+      this._toggleHiddenButtons();
     } else {
       // Modify existed workout
       // Get data from form
@@ -311,7 +339,7 @@ class App {
   }
 
   _renderWorkoutMarker(workout) {
-    L.marker(workout.coords)
+    const marker = L.marker(workout.coords)
       .addTo(this.#map)
       .bindPopup(
         L.popup({
@@ -321,11 +349,15 @@ class App {
           closeOnClick: false,
           className: `${workout.type}-popup`,
         })
-      )
+      );
+
+    marker
       .setPopupContent(
         `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
       )
       .openPopup();
+
+    this.#markers.push(marker);
   }
 
   _generateMarkup(workout) {
@@ -408,7 +440,7 @@ class App {
     // console.log(this.#currentWorkoutEl);
 
     const workoutEl = e.target.closest('.workout');
-    if (!this.#currentWorkoutEl) return;
+    if (!workoutEl) return;
 
     this.#currentWorkout = this.#workouts.find(
       work => work.id === workoutEl.dataset.id
@@ -447,7 +479,31 @@ class App {
     if (elevationGain) inputElevation.value = elevationGain;
   }
 
-  _deleteWorkout() {}
+  _deleteAllWorkouts() {
+    localStorage.removeItem('workouts');
+    this.#workouts.splice(0, this.#workouts.length);
+    document.querySelector('.workouts').innerHTML = '';
+    this._toggleHiddenButtons();
+    this.#markers.forEach(marker => this.#map.removeLayer(marker));
+  }
+
+  _deleteWorkout(e) {
+    // 1. Select the workout that needs to be deleted
+    this.#currentWorkoutEl = e.target.closest('.workout__container');
+
+    const workoutEl = e.target.closest('.workout');
+
+    if (!workoutEl) return;
+
+    // 2. Delete the workout from workouts array
+    this.#workouts.splice(
+      this.#workouts.findIndex(work => work.id === workoutEl.dataset.id),
+      1
+    );
+    // console.log(this.#workouts);
+
+    // 3. Delete the workout from local storage
+  }
 
   _moveToPopup(e) {
     const workoutEl = e.target.closest('.workout');

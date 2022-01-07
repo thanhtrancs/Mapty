@@ -56,7 +56,7 @@ a:visited {
   justify-content: right;
 }
 
-.button__sort__delete {
+.button__top {
   margin-bottom: 10px;
   background-color: var(--color-dark--2);
   padding: 0.4rem 1rem;
