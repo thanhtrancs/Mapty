@@ -19,10 +19,6 @@ class Workout {
       months[this.date.getMonth()]
     } ${this.date.getDate()}`;
   }
-
-  click() {
-    this.clicks++;
-  }
 }
 
 class Running extends Workout {
@@ -107,6 +103,7 @@ class App {
         e.target &&
         e.target.className === 'button__icon button__icon--delete'
       ) {
+        console.log('DELETE!!!!!');
         this._deleteWorkout(e);
       }
     });
@@ -139,14 +136,9 @@ class App {
   _loadMap(position) {
     const { latitude } = position.coords;
     const { longitude } = position.coords;
-    // console.log(latitude, longitude);
-    // console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
 
     const coords = [latitude, longitude];
-
-    // console.log(this);
     this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
-    //   console.log(map);
 
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       attribution:
@@ -161,8 +153,10 @@ class App {
 
   _showForm(mapE) {
     this.#mapEvent = mapE;
+    console.log('before ', document.activeElement);
     formContainer.classList.remove('hidden');
-    inputDistance.focus();
+    // inputDistance.focus();
+    setTimeout(() => inputDistance.focus(), 100);
   }
 
   _hideForm() {
@@ -175,7 +169,6 @@ class App {
     formContainer.style.display = 'none';
     formContainer.classList.add('hidden');
 
-    // setTimeout(() => (form.style.display = 'grid'), 1000);
     setTimeout(() => (formContainer.style.display = 'flex'), 1000);
 
     if (this.#edit) {
@@ -258,10 +251,9 @@ class App {
       this._setLocalStorage();
 
       // Show sort and delete buttons
-      // if (buttonsTop.classList.contains('hidden')) {
-      //   buttonsTop.classList.remove('hidden');
-      // }
-      this._toggleHiddenButtons();
+      if (buttonsTop.classList.contains('hidden')) {
+        this._toggleHiddenButtons();
+      }
     } else {
       // Modify existed workout
       // Get data from form
@@ -388,7 +380,7 @@ class App {
       html += `
         <div class="workout__details">
             <span class="workout__icon">⚡️</span>
-            <span class="workout__value">${workout.pace}</span>
+            <span class="workout__value">${workout.pace.toFixed(1)}</span>
             <span class="workout__unit">min/km</span>
         </div>
         <div class="workout__details">
@@ -420,7 +412,6 @@ class App {
   }
 
   _renderWorkout(workout) {
-    // formContainer.insertAdjacentHTML('afterend', this._generateMarkup(workout));
     const workoutEl = document
       .createRange()
       .createContextualFragment(this._generateMarkup(workout));
@@ -474,6 +465,7 @@ class App {
     // this.#currentWorkoutEl.classList.add('hidden');
     formContainer.classList.remove('hidden');
     inputDistance.value = distance;
+    setTimeout(() => inputDistance.focus(), 100);
     inputDuration.value = duration;
     if (cadence) inputCadence.value = cadence;
     if (elevationGain) inputElevation.value = elevationGain;
@@ -495,14 +487,24 @@ class App {
 
     if (!workoutEl) return;
 
-    // 2. Delete the workout from workouts array
-    this.#workouts.splice(
-      this.#workouts.findIndex(work => work.id === workoutEl.dataset.id),
-      1
+    const index = this.#workouts.findIndex(
+      work => work.id === workoutEl.dataset.id
     );
-    // console.log(this.#workouts);
+    // 2. Delete the workout from workouts array
+    this.#workouts.splice(index, 1);
 
     // 3. Delete the workout from local storage
+    this._setLocalStorage();
+
+    // 4. Remove workout view and marker
+    this.#currentWorkoutEl.innerHTML = '';
+    this.#map.removeLayer(this.#markers[index]);
+    this.#markers.splice(index, 1);
+
+    // 5. Hide top buttons if there are no workouts
+    if (this.#workouts.length < 1) {
+      this._toggleHiddenButtons();
+    }
   }
 
   _moveToPopup(e) {
@@ -520,10 +522,6 @@ class App {
         duration: 1,
       },
     });
-
-    // public interface
-    // workout.click();
-    // console.log(workout);
   }
 
   _setLocalStorage() {
