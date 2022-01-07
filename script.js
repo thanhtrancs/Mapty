@@ -103,8 +103,7 @@ class App {
 
     buttonClose.addEventListener('click', this._hideForm.bind(this));
 
-    this.#formPosition = form.getBoundingClientRect();
-    // console.log(this.#formPosition);
+    // this.#formPosition = formContainer.getBoundingClientRect();
     // this.reset();
   }
 
@@ -163,6 +162,7 @@ class App {
 
     if (this.#edit) {
       this._toggleDisabledButtons();
+      this.#currentWorkoutEl.classList.remove('hidden');
     }
   }
 
@@ -388,7 +388,11 @@ class App {
   }
 
   _renderWorkout(workout) {
-    formContainer.insertAdjacentHTML('afterend', this._generateMarkup(workout));
+    // formContainer.insertAdjacentHTML('afterend', this._generateMarkup(workout));
+    const workoutEl = document
+      .createRange()
+      .createContextualFragment(this._generateMarkup(workout));
+    containerWorkouts.insertBefore(workoutEl, containerWorkouts.firstChild);
   }
 
   _editWorkout(e) {
@@ -429,13 +433,14 @@ class App {
     // 3. Hide current workout details and replace with
     // filled current data on form
     inputType.value = this.#currentWorkout.type;
-    // this._toggleElevationField();
-
     const workoutPosition = this.#currentWorkoutEl.getBoundingClientRect();
-    form.style.y = workoutPosition.y + 'px';
-    // console.log(workoutPosition, form.getBoundingClientRect());
-    formContainer.classList.remove('hidden');
+    // form.style.y = workoutPosition.y + 'px';
+    // console.log(workoutPosition, this.#formPosition);
+    // formContainer.style.top = `${workoutPosition.top}px`;
+    // formContainer.style.left = `${workoutPosition.left}px`;
+    // console.log('after: ', this.#formPosition);
     // this.#currentWorkoutEl.classList.add('hidden');
+    formContainer.classList.remove('hidden');
     inputDistance.value = distance;
     inputDuration.value = duration;
     if (cadence) inputCadence.value = cadence;
