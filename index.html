@@ -33,12 +33,37 @@
   <body>
     <div class="sidebar">
       <img src="logo.png" alt="Logo" class="logo" />
-      <div class="buttons__container hidden">
-        <button class="button__top button__top--sort">Sort</button>
-        <button class="button__top button__top--delete">Delete all</button>
+      <!-- DELETE ALL and SORT FEATURE-->
+      <div class="feature__container hidden">
+        <button class="button__delete">Delete all</button>
+        <div class="sort__container">
+          <form class="form__sort">
+            <label class="sort__text">Sort by:</label>
+            <select name="sort" class="sort__option form__sortby">
+              <option class="sort__option" value="date--desc">
+                Date: Newest to Oldest
+              </option>
+              <option class="sort__option" value="date--asc">
+                Date: Oldest to Newest
+              </option>
+              <option class="sort__option" value="distance--desc">
+                Distance: High to Low
+              </option>
+              <option class="sort__option" value="distance--asc">
+                Distance: Low to High
+              </option>
+              <option class="sort__option" value="duration--desc">
+                Duration: High to Low
+              </option>
+              <option class="sort__option" value="duration--asc">
+                Duration: Low to High
+              </option>
+            </select>
+          </form>
+        </div>
       </div>
 
-      <!-- FORM -->
+      <!-- WORKOUT FORM -->
       <div class="form__container hidden">
         <button class="button__close__form">&times;</button>
         <form class="form">

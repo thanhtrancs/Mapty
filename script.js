@@ -59,8 +59,10 @@ class Cycling extends Workout {
 //--------------------Application Architecture----------------------
 const form = document.querySelector('.form');
 const formContainer = document.querySelector('.form__container');
-const buttonsTop = document.querySelector('.buttons__container');
-const buttonDeleteAll = document.querySelector('.button__top--delete');
+const featureContainer = document.querySelector('.feature__container');
+const buttonDeleteAll = document.querySelector('.button__delete');
+const formSort = document.querySelector('.form__sort');
+const sortBy = document.querySelector('.form__sortby');
 const buttonClose = document.querySelector('.button__close__form');
 const containerWorkouts = document.querySelector('.workouts');
 const inputType = document.querySelector('.form__input--type');
@@ -79,7 +81,6 @@ class App {
   #currentWorkoutEl;
   #markers = [];
 
-  // #formPosition;
   constructor() {
     // Get user's position
     this._getPosition();
@@ -90,6 +91,7 @@ class App {
     form.addEventListener('submit', this._manageWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
+    formSort.addEventListener('change', this._renderSortedWorkouts.bind(this));
 
     document.addEventListener('click', e => {
       if (
@@ -103,7 +105,6 @@ class App {
         e.target &&
         e.target.className === 'button__icon button__icon--delete'
       ) {
-        console.log('DELETE!!!!!');
         this._deleteWorkout(e);
       }
     });
@@ -118,7 +119,6 @@ class App {
     if (this.#workouts.length > 0) {
       this._toggleHiddenButtons();
     }
-    // this.#formPosition = formContainer.getBoundingClientRect();
     // this.reset();
   }
 
@@ -153,9 +153,7 @@ class App {
 
   _showForm(mapE) {
     this.#mapEvent = mapE;
-    console.log('before ', document.activeElement);
     formContainer.classList.remove('hidden');
-    // inputDistance.focus();
     setTimeout(() => inputDistance.focus(), 100);
   }
 
@@ -178,7 +176,7 @@ class App {
   }
 
   _toggleHiddenButtons() {
-    buttonsTop.classList.toggle('hidden');
+    featureContainer.classList.toggle('hidden');
   }
 
   _toggleDisabledButtons() {
@@ -251,7 +249,7 @@ class App {
       this._setLocalStorage();
 
       // Show sort and delete buttons
-      if (buttonsTop.classList.contains('hidden')) {
+      if (featureContainer.classList.contains('hidden')) {
         this._toggleHiddenButtons();
       }
     } else {
@@ -418,6 +416,18 @@ class App {
     containerWorkouts.insertBefore(workoutEl, containerWorkouts.firstChild);
   }
 
+  _renderSortedWorkouts() {
+    document.querySelector('.workouts').innerHTML = '';
+    const workouts = this._sortWorkouts();
+
+    workouts.forEach(workout => {
+      const workoutEl = document
+        .createRange()
+        .createContextualFragment(this._generateMarkup(workout));
+      containerWorkouts.insertBefore(workoutEl, containerWorkouts.firstChild);
+    });
+  }
+
   _editWorkout(e) {
     this.#edit = true;
 
@@ -428,7 +438,6 @@ class App {
 
     // 1. Find the workout data that needs to be modified
     this.#currentWorkoutEl = e.target.closest('.workout__container');
-    // console.log(this.#currentWorkoutEl);
 
     const workoutEl = e.target.closest('.workout');
     if (!workoutEl) return;
@@ -457,12 +466,6 @@ class App {
     // filled current data on form
     inputType.value = this.#currentWorkout.type;
     const workoutPosition = this.#currentWorkoutEl.getBoundingClientRect();
-    // form.style.y = workoutPosition.y + 'px';
-    // console.log(workoutPosition, this.#formPosition);
-    // formContainer.style.top = `${workoutPosition.top}px`;
-    // formContainer.style.left = `${workoutPosition.left}px`;
-    // console.log('after: ', this.#formPosition);
-    // this.#currentWorkoutEl.classList.add('hidden');
     formContainer.classList.remove('hidden');
     inputDistance.value = distance;
     setTimeout(() => inputDistance.focus(), 100);
@@ -507,6 +510,43 @@ class App {
     }
   }
 
+  _sortWorkouts() {
+    let workouts;
+
+    // Sort based on DATE (newest to oldest) DEFAULT
+    if (sortBy.value === 'date--asc') {
+      workouts = this.#workouts.sort((a, b) => {
+        return new Date(b.date) - new Date(a.date);
+      });
+    }
+
+    if (sortBy.value === 'date--desc') {
+      workouts = this.#workouts.sort((a, b) => {
+        return new Date(a.date) - new Date(b.date);
+      });
+    }
+
+    // Sort based on DISTANCE
+    if (sortBy.value === 'distance--asc') {
+      workouts = this.#workouts.sort((a, b) => b.distance - a.distance);
+    }
+
+    if (sortBy.value === 'distance--desc') {
+      workouts = this.#workouts.sort((a, b) => a.distance - b.distance);
+    }
+
+    // Sort based on DURATION
+    if (sortBy.value === 'duration--asc') {
+      workouts = this.#workouts.sort((a, b) => b.duration - a.duration);
+    }
+
+    if (sortBy.value === 'duration--desc') {
+      workouts = this.#workouts.sort((a, b) => a.duration - b.duration);
+    }
+
+    return workouts;
+  }
+
   _moveToPopup(e) {
     const workoutEl = e.target.closest('.workout');
 
@@ -527,13 +567,11 @@ class App {
   _setLocalStorage() {
     // Convert objects to string to store in local storage
     localStorage.setItem('workouts', JSON.stringify(this.#workouts));
-    // console.log(this.#workouts);
   }
 
   _getLocalStorage() {
     // Convert string to objects
     const data = JSON.parse(localStorage.getItem('workouts'));
-    // console.log(data);
 
     if (!data) return;
 

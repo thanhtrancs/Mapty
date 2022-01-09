@@ -50,14 +50,25 @@ a:visited {
   position: relative;
 }
 
-.buttons__container {
+.hidden {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.logo {
+  height: 5.2rem;
+  align-self: center;
+  margin-bottom: 2rem;
+}
+
+.feature__container {
   display: flex;
   gap: 0.75rem;
   justify-content: right;
+  margin-bottom: 1.25rem;
 }
 
-.button__top {
-  margin-bottom: 10px;
+.button__delete {
   background-color: var(--color-dark--2);
   padding: 0.4rem 1rem;
   border-radius: 5px;
@@ -68,10 +79,22 @@ a:visited {
   font-weight: 600;
 }
 
-.logo {
-  height: 5.2rem;
-  align-self: center;
-  margin-bottom: 2rem;
+.sort__container {
+  background-color: #42484d;
+  padding: 0.6rem 0.5rem;
+  border-radius: 5px;
+}
+
+.sort__text {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.sort__option {
+  background-color: #fff;
+  border: none;
+  font-size: 1.1rem;
+  color: #2d3439;
 }
 
 .workouts {
@@ -269,9 +292,4 @@ a:visited {
 }
 .cycling-popup .leaflet-popup-content-wrapper {
   border-left: 5px solid var(--color-brand--1);
-}
-
-.hidden {
-  visibility: hidden;
-  opacity: 0;
 }
