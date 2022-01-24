@@ -23,6 +23,7 @@ class Workout {
 
 class Running extends Workout {
   type = 'running';
+
   constructor(coords, distance, duration, cadence) {
     super(coords, distance, duration);
     this.cadence = cadence;
@@ -576,6 +577,13 @@ class App {
     if (!data) return;
 
     this.#workouts = data;
+
+    // Rebuild Running and Cycling object from local storage
+    this.#workouts.forEach(work =>
+      work.type === 'running'
+        ? Object.setPrototypeOf(work, Running.prototype)
+        : Object.setPrototypeOf(work, Cycling.prototype)
+    );
 
     this.#workouts.forEach(work => this._renderWorkout(work));
   }
